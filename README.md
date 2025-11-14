@@ -54,14 +54,25 @@ quick_manual_analysis(
 
 ## 📁 Структура проекта
 
+### Основные модули
 - **football_betting_model.py** - Основная модель (Пуассон, Kelly, value betting)
 - **data_parser.py** - Парсер для understat.com (xG данные)
-- **main_analysis.py** - Главный скрипт для анализа матчей
+- **main_analysis.py** - Простой анализ одного матча
+- **integrated_analysis.py** - 🌟 **ГЛАВНЫЙ СКРИПТ** - полный анализ со всеми факторами
+
+### Парсеры и источники данных
+- **flashscore_parser.py** - Парсер/интеграция с Flashscore (коэффициенты, форма)
+- **advanced_features.py** - Учет травм, формы, мотивации, места в таблице
+
+### Расширенные функции
 - **batch_analyzer.py** - Batch-анализ нескольких матчей одновременно
 - **team_elo.py** - Система ELO-рейтинга для команд
 - **visualizer.py** - Генератор HTML-отчетов
 - **betting_logger.py** - Инструменты для логирования ставок
-- **team_cache.json** - Кэш данных (создается автоматически)
+
+### Файлы данных
+- **odds_template.csv** - Шаблон для коэффициентов
+- **team_cache.json** - Кэш xG данных (создается автоматически)
 
 ## 🎯 Возможности
 
@@ -275,6 +286,88 @@ def get_h2h_adjustment(self, team1, team2):
 ## 📝 Лицензия
 
 MIT - делай что хочешь, но на свой риск.
+
+## 📊 Источники данных
+
+### 1. xG данные - Understat.com
+- Автоматический парсинг средних xG команд
+- Статистика последних 10 матчей
+- Кэширование на 24 часа
+
+### 2. Коэффициенты - Flashscore / Букмекеры
+**Варианты получения:**
+
+#### A. Ручной ввод (рекомендуется для начала)
+```python
+from flashscore_parser import manual_odds_input
+
+odds = manual_odds_input("Manchester City", "Liverpool")
+```
+
+#### B. CSV файл (для batch-анализа)
+```python
+from flashscore_parser import get_odds_from_csv
+
+odds = get_odds_from_csv('odds_template.csv', 'Manchester City', 'Liverpool')
+```
+
+#### C. API (для автоматизации)
+```python
+from flashscore_parser import FlashscoreAPIClient
+
+# API-Football: 100 запросов/день бесплатно
+# Регистрация: https://www.api-football.com/
+
+client = FlashscoreAPIClient(api_key='твой_ключ', provider='api-football')
+odds = client.get_odds(fixture_id=12345)
+```
+
+### 3. Дополнительные факторы
+- Форма команд (последние 5-10 матчей)
+- Травмы и дисквалификации
+- Место в таблице (мотивация)
+- Дни отдыха (усталость)
+- H2H статистика
+- Эффект нового тренера
+
+## 🌟 Полный анализ матча (РЕКОМЕНДУЕТСЯ)
+
+```python
+from integrated_analysis import IntegratedMatchAnalyzer
+from advanced_features import TeamContext, MatchImportance
+from flashscore_parser import get_odds_from_csv
+
+# 1. Создаем анализатор
+analyzer = IntegratedMatchAnalyzer()
+
+# 2. Опционально: добавляем контекст команд
+home_context = TeamContext(
+    team_name="Manchester City",
+    base_xg=2.3,  # Будет получен автоматически
+    base_xga=0.8,
+    last_5_results=['W', 'W', 'D', 'W', 'W'],  # Из Flashscore
+    goals_scored_last_5=14,
+    goals_conceded_last_5=3,
+    league_position=2,
+    points=45,
+    goal_difference=28,
+    key_players_missing=1,  # Травмированные ключевые игроки
+    missing_players_impact=0.4,  # 0.0-1.0 влияние травм
+    match_importance=MatchImportance.HIGH,
+    rest_days=4
+)
+
+# 3. Полный анализ
+result = analyzer.full_analysis(
+    home_team="Manchester City",
+    away_team="Liverpool",
+    league='EPL',
+    odds=get_odds_from_csv('odds.csv', 'Manchester City', 'Liverpool'),
+    home_context=home_context,  # Опционально
+    away_context=away_context,  # Опционально
+    use_elo=True  # Комбинировать с ELO-рейтингом
+)
+```
 
 ## 🆕 Новые возможности
 
