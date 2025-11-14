@@ -32,10 +32,11 @@ class UnderstatParser:
         try:
             league_url = self.leagues.get(league, 'epl')
             url = f"{self.base_url}/league/{league_url}/{season}"
-            
-            response = requests.get(url, headers=self.headers)
+
+            response = requests.get(url, headers=self.headers, timeout=15)
+            response.raise_for_status()
             soup = BeautifulSoup(response.content, 'html.parser')
-            
+
             # Ищем данные команд в скриптах
             scripts = soup.find_all('script')
             for script in scripts:
@@ -44,19 +45,29 @@ class UnderstatParser:
                     if json_match:
                         teams_data = json.loads(json_match.group(1).encode().decode('unicode_escape'))
                         return teams_data
-            
+
+            return None
+        except requests.Timeout:
+            print(f"⏱️  Таймаут при получении данных лиги {league}")
+            return None
+        except requests.RequestException as e:
+            print(f"❌ Ошибка сети при получении команд: {e}")
+            return None
+        except json.JSONDecodeError as e:
+            print(f"❌ Ошибка парсинга JSON: {e}")
             return None
         except Exception as e:
-            print(f"Ошибка получения команд: {e}")
+            print(f"❌ Неожиданная ошибка получения команд: {e}")
             return None
     
     def get_team_matches(self, team_id, season='2024'):
         """Получить матчи команды за сезон"""
         try:
             url = f"{self.base_url}/team/{team_id}/{season}"
-            response = requests.get(url, headers=self.headers, timeout=10)
+            response = requests.get(url, headers=self.headers, timeout=15)
+            response.raise_for_status()
             soup = BeautifulSoup(response.content, 'html.parser')
-            
+
             scripts = soup.find_all('script')
             for script in scripts:
                 if 'var matchesData' in script.text:
@@ -64,10 +75,19 @@ class UnderstatParser:
                     if json_match:
                         matches_data = json.loads(json_match.group(1).encode().decode('unicode_escape'))
                         return matches_data
-            
+
+            return None
+        except requests.Timeout:
+            print(f"⏱️  Таймаут при получении матчей команды {team_id}")
+            return None
+        except requests.RequestException as e:
+            print(f"❌ Ошибка сети при получении матчей: {e}")
+            return None
+        except json.JSONDecodeError as e:
+            print(f"❌ Ошибка парсинга JSON матчей: {e}")
             return None
         except Exception as e:
-            print(f"Ошибка получения матчей команды {team_id}: {e}")
+            print(f"❌ Неожиданная ошибка получения матчей команды {team_id}: {e}")
             return None
     
     def parse_team_stats(self, team_name, league='EPL', last_n_games=10):

@@ -57,6 +57,10 @@ quick_manual_analysis(
 - **football_betting_model.py** - Основная модель (Пуассон, Kelly, value betting)
 - **data_parser.py** - Парсер для understat.com (xG данные)
 - **main_analysis.py** - Главный скрипт для анализа матчей
+- **batch_analyzer.py** - Batch-анализ нескольких матчей одновременно
+- **team_elo.py** - Система ELO-рейтинга для команд
+- **visualizer.py** - Генератор HTML-отчетов
+- **betting_logger.py** - Инструменты для логирования ставок
 - **team_cache.json** - Кэш данных (создается автоматически)
 
 ## 🎯 Возможности
@@ -75,6 +79,21 @@ quick_manual_analysis(
 - Автоматический поиск value (когда твоя вероятность > букмекера)
 - Расчет edge (преимущества)
 - Критерий Келли для оптимального размера ставки
+
+### 4. Batch-анализ (НОВОЕ!)
+- Анализ нескольких матчей одновременно
+- Автоматический поиск лучших value ставок из всех матчей
+- Экспорт результатов в JSON для дальнейшего анализа
+
+### 5. ELO-рейтинг (НОВОЕ!)
+- Система ELO для оценки силы команд
+- Комбинирование прогнозов xG + ELO для повышения точности
+- Обновление рейтингов после каждого матча
+
+### 6. HTML-отчеты (НОВОЕ!)
+- Красивые визуальные отчеты без внешних библиотек
+- Анализ betting log с графиками ROI и winrate
+- Готовые отчеты для открытия в браузере
 
 ## 🔧 Доступные лиги
 
@@ -256,6 +275,61 @@ def get_h2h_adjustment(self, team1, team2):
 ## 📝 Лицензия
 
 MIT - делай что хочешь, но на свой риск.
+
+## 🆕 Новые возможности
+
+### Batch-анализ матчей
+
+```python
+from batch_analyzer import BatchAnalyzer
+
+matches = [
+    {
+        'home_team': 'Manchester City',
+        'away_team': 'Liverpool',
+        'league': 'EPL',
+        'odds': {'home_win': 1.85, 'draw': 4.00, 'away_win': 4.20, 'over_2.5': 1.60, 'btts': 1.75}
+    },
+    # ... добавь остальные матчи
+]
+
+analyzer = BatchAnalyzer()
+df = analyzer.analyze_matches(matches)
+analyzer.print_best_bets(min_edge=0.03)  # Показать ставки с edge > 3%
+```
+
+### ELO-рейтинг
+
+```python
+from team_elo import EloRatingSystem, initialize_league_ratings, combine_xg_and_elo
+
+# Инициализация с базовыми рейтингами АПЛ
+elo = initialize_league_ratings('EPL')
+
+# Прогноз на основе ELO
+elo_prediction = elo.predict_match("Arsenal", "Chelsea")
+
+# Комбинируем с xG (70% xG + 30% ELO)
+combined = combine_xg_and_elo(xg_prediction, elo_prediction, weight_xg=0.7)
+
+# Обновляем рейтинг после матча (Арсенал 2:1 Челси)
+elo.update_ratings("Arsenal", "Chelsea", 2, 1)
+elo.save_ratings()  # Сохраняем для следующего использования
+```
+
+### HTML-отчеты
+
+```python
+from visualizer import HTMLReportGenerator, generate_betting_log_report
+
+# Отчет по матчам
+generator = HTMLReportGenerator()
+filename = generator.generate_match_report(analyzer.results)
+print(f"Отчет создан: {filename}")
+
+# Отчет по betting log
+generate_betting_log_report('betting_log_20241114.csv')
+```
 
 ## ⚠️ Disclaimer
 
